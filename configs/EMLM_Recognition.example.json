@@ -1,0 +1,12 @@
+{
+  "qwen_model": "Qwen/Qwen3.5-4B",
+  "inference_checkpoint": "weights/EMLM_Recognition_inference.pt",
+  "query_count": 16,
+  "adapter_bottleneck": 64,
+  "lora": {
+    "rank": 16,
+    "alpha": 32.0,
+    "dropout": 0.0
+  }
+}
+

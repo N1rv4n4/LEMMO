@@ -1,0 +1,18 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.idea/
+.vscode/
+outputs/
+*.log
+
+# Model binaries are distributed separately (for example via Hugging Face or
+# GitHub Releases/LFS), not through ordinary Git objects.
+weights/*.pt
+weights/*.pth
+weights/*.bin
+weights/*.safetensors
+weights/qwen*/
+
