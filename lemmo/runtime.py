@@ -9,21 +9,21 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from .compat import configure_runtime
 from .io import (
-    EMLM_DESCRIPTION_MAXIMUM_LENGTH,
-    EMLM_DESCRIPTION_MINIMUM_LENGTH,
-    EMLM_RECOGNITION_LENGTHS,
+    LEMMO_DESCRIPTION_MAXIMUM_LENGTH,
+    LEMMO_DESCRIPTION_MINIMUM_LENGTH,
+    LEMMO_RECOGNITION_LENGTHS,
     load_iq,
     resolve_path,
 )
 from .lora import inject_qwen_lora
-from .models import EMLMRecognitionModel, EMLMDescriptionModel, load_emlm_recognition_weights, load_emlm_description_weights
+from .models import LEMMORecognitionModel, LEMMODescriptionModel, load_lemmo_recognition_weights, load_lemmo_description_weights
 
 
-EMLM_RECOGNITION_SYSTEM_PROMPT = (
+LEMMO_RECOGNITION_SYSTEM_PROMPT = (
     "你是电磁信号分析助手。请仅依据提供的电磁信号特征简洁回答问题；"
     "如果证据不足，应明确说明无法判断。"
 )
-EMLM_DESCRIPTION_SYSTEM_PROMPT = (
+LEMMO_DESCRIPTION_SYSTEM_PROMPT = (
     "You are an electromagnetic signal analysis assistant. Analyze the provided "
     "IQ signal and answer the user's question accurately and concisely."
 )
@@ -121,7 +121,7 @@ class _BaseRuntime:
         self.config = json.loads(self.config_path.read_text(encoding="utf-8"))
         self.device = torch.device(device)
         if self.device.type != "cuda" or not torch.cuda.is_available():
-            raise RuntimeError("EMLM inference requires a CUDA GPU")
+            raise RuntimeError("LEMMO inference requires a CUDA GPU")
         torch.cuda.set_device(self.device)
         torch.backends.cuda.matmul.allow_tf32 = True
         reference = _model_reference(self.config_path, self.config["qwen_model"])
@@ -150,13 +150,13 @@ class _BaseRuntime:
         self.qwen = self.qwen.to(self.device).eval()
 
 
-class EMLMRecognitionRuntime(_BaseRuntime):
-    tasks = EMLMRecognitionModel.TASKS
+class LEMMORecognitionRuntime(_BaseRuntime):
+    tasks = LEMMORecognitionModel.TASKS
 
     def __init__(self, config_path: str | Path, device: str = "cuda:0") -> None:
         super().__init__(config_path, device)
-        self.model = EMLMRecognitionModel(self.config)
-        saved = load_emlm_recognition_weights(
+        self.model = LEMMORecognitionModel(self.config)
+        saved = load_lemmo_recognition_weights(
             self.model, resolve_path(self.config_path, self.config["inference_checkpoint"])
         )
         self._load_lora(saved)
@@ -169,11 +169,11 @@ class EMLMRecognitionRuntime(_BaseRuntime):
         task: str,
         question: str,
         maximum_new_tokens: int = 64,
-        system_prompt: str = EMLM_RECOGNITION_SYSTEM_PROMPT,
+        system_prompt: str = LEMMO_RECOGNITION_SYSTEM_PROMPT,
     ) -> str:
         if task not in self.tasks:
             raise ValueError(f"task must be one of {self.tasks}")
-        array = load_iq(signal_path, EMLM_RECOGNITION_LENGTHS)
+        array = load_iq(signal_path, LEMMO_RECOGNITION_LENGTHS)
         signal = torch.from_numpy(array)[None].to(self.device, dtype=torch.bfloat16)
         rates = torch.tensor([sample_rate_hz], dtype=torch.float32, device=self.device)
         prompt = _prompt(self.tokenizer, system_prompt, question, self.device)
@@ -188,12 +188,12 @@ class EMLMRecognitionRuntime(_BaseRuntime):
         )
 
 
-class EMLMDescriptionRuntime(_BaseRuntime):
+class LEMMODescriptionRuntime(_BaseRuntime):
     def __init__(self, config_path: str | Path, device: str = "cuda:0") -> None:
         super().__init__(config_path, device)
-        self.model = EMLMDescriptionModel(int(self.config.get("query_count", 64)))
+        self.model = LEMMODescriptionModel(int(self.config.get("query_count", 64)))
         self.system_prompt = self._description_system_prompt()
-        saved = load_emlm_description_weights(
+        saved = load_lemmo_description_weights(
             self.model, resolve_path(self.config_path, self.config["inference_checkpoint"])
         )
         self._load_lora(saved)
@@ -202,7 +202,7 @@ class EMLMDescriptionRuntime(_BaseRuntime):
     def _description_system_prompt(self) -> str:
         value = self.config.get("system_prompt_file")
         if value is None:
-            return EMLM_DESCRIPTION_SYSTEM_PROMPT
+            return LEMMO_DESCRIPTION_SYSTEM_PROMPT
         prompt_path = resolve_path(self.config_path, str(value))
         prompt = prompt_path.read_text(encoding="utf-8").strip()
         if not prompt:
@@ -228,8 +228,8 @@ class EMLMDescriptionRuntime(_BaseRuntime):
         user_prompt = f"{str(input_setting).strip()}\n\n用户问题：{str(question).strip()}"
         array = load_iq(
             signal_path,
-            minimum_length=EMLM_DESCRIPTION_MINIMUM_LENGTH,
-            maximum_length=EMLM_DESCRIPTION_MAXIMUM_LENGTH,
+            minimum_length=LEMMO_DESCRIPTION_MINIMUM_LENGTH,
+            maximum_length=LEMMO_DESCRIPTION_MAXIMUM_LENGTH,
         )
         signal = torch.from_numpy(array)[None].to(self.device, dtype=torch.bfloat16)
         rates = torch.tensor([sample_rate_hz], dtype=torch.float32, device=self.device)

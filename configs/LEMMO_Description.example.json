@@ -1,0 +1,12 @@
+{
+  "qwen_model": "Qwen/Qwen3.5-4B",
+  "inference_checkpoint": "weights/LEMMO_Description.pt",
+  "system_prompt_file": "configs/LEMMO_Description.system_prompt.txt",
+  "query_count": 64,
+  "lora": {
+    "rank": 16,
+    "alpha": 32.0,
+    "dropout": 0.05
+  }
+}
+

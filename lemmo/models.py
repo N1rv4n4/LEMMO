@@ -227,7 +227,7 @@ class EncoderWrapper(nn.Module):
         return self.encoder.forward_patches(patches, lengths, sample_rates)
 
 
-class EMLMRecognitionSignalPath(nn.Module):
+class LEMMORecognitionSignalPath(nn.Module):
     def __init__(self, query_count: int = 16) -> None:
         super().__init__()
         self.encoder = EncoderWrapper()
@@ -265,12 +265,12 @@ class ResidualTaskAdapter(nn.Module):
         return x + self.up(F.gelu(self.down(self.norm(x))))
 
 
-class EMLMRecognitionModel(nn.Module):
+class LEMMORecognitionModel(nn.Module):
     TASKS = ("amc", "interference", "uav", "wtc")
 
     def __init__(self, config: dict) -> None:
         super().__init__()
-        self.signal = EMLMRecognitionSignalPath(int(config.get("query_count", 16)))
+        self.signal = LEMMORecognitionSignalPath(int(config.get("query_count", 16)))
         bottleneck = int(config.get("adapter_bottleneck", 64))
         self.task_adapters = nn.ModuleDict({task: ResidualTaskAdapter(bottleneck) for task in self.TASKS})
 
@@ -288,7 +288,7 @@ class EMLMRecognitionModel(nn.Module):
         return self.signal.bridge.projector(self.signal.bridge.output_norm(adapted))
 
 
-class EMLMDescriptionModel(nn.Module):
+class LEMMODescriptionModel(nn.Module):
     patch_size = 16
     chunk_points = 1_000_000
     maximum_chunks = 8
@@ -301,10 +301,10 @@ class EMLMDescriptionModel(nn.Module):
 
     def encode(self, signals: torch.Tensor, sample_rates: torch.Tensor) -> torch.Tensor:
         if signals.ndim != 3 or signals.shape[0] != 1 or signals.shape[-1] != 2:
-            raise ValueError("EMLM_Description currently expects one [1,L,2] signal")
+            raise ValueError("LEMMO_Description currently expects one [1,L,2] signal")
         points = int(signals.shape[1])
         if points < self.patch_size or points > self.chunk_points * self.maximum_chunks:
-            raise ValueError("EMLM_Description IQ length must be in [16,8000000]")
+            raise ValueError("LEMMO_Description IQ length must be in [16,8000000]")
         chunks: list[torch.Tensor] = []
         for start in range(0, points, self.chunk_points):
             current = signals[:, start : min(points, start + self.chunk_points)]
@@ -333,17 +333,17 @@ class EMLMDescriptionModel(nn.Module):
         )["qwen_query_embeddings"]
 
 
-def load_emlm_recognition_weights(model: EMLMRecognitionModel, checkpoint: Path) -> dict:
+def load_lemmo_recognition_weights(model: LEMMORecognitionModel, checkpoint: Path) -> dict:
     saved = torch.load(checkpoint, map_location="cpu", weights_only=True)
     if "model_state" in saved:
         model.load_state_dict(saved["model_state"], strict=True)
         return saved
     signal_state = saved.get("signal_state", saved.get("signal_trainable_state"))
     if signal_state is None:
-        raise KeyError("EMLM_Recognition inference checkpoint has no signal state")
+        raise KeyError("LEMMO_Recognition inference checkpoint has no signal state")
     incompatible = model.signal.load_state_dict(signal_state, strict=False)
     if incompatible.unexpected_keys:
-        raise RuntimeError(f"Unexpected EMLM_Recognition signal keys: {incompatible.unexpected_keys}")
+        raise RuntimeError(f"Unexpected LEMMO_Recognition signal keys: {incompatible.unexpected_keys}")
     branch_state = saved["task_branch_state"]
     for task, adapter in model.task_adapters.items():
         prefix = f"{task}.adapter."
@@ -352,10 +352,14 @@ def load_emlm_recognition_weights(model: EMLMRecognitionModel, checkpoint: Path)
     return saved
 
 
-def load_emlm_description_weights(model: EMLMDescriptionModel, checkpoint: Path) -> dict:
+def load_lemmo_description_weights(model: LEMMODescriptionModel, checkpoint: Path) -> dict:
     saved = torch.load(checkpoint, map_location="cpu", weights_only=True)
-    if saved.get("format") != "emlm_description_inference_v2":
-        raise RuntimeError("Unsupported EMLM_Description inference checkpoint format")
+    supported_formats = {
+        "emlm_description_inference_v2",  # Legacy serialized bundle.
+        "lemmo_description_inference_v2",
+    }
+    if saved.get("format") not in supported_formats:
+        raise RuntimeError("Unsupported LEMMO_Description inference checkpoint format")
     model.load_state_dict(saved.get("model_state", saved.get("signal_state")), strict=True)
     return saved
 

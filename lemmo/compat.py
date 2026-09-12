@@ -6,11 +6,11 @@ from pathlib import Path
 
 def configure_runtime() -> None:
     """Configure the validated TileLang path before FLA modules are constructed."""
-    toolchain = os.environ.get("EMLM_TOOLCHAIN")
+    toolchain = os.environ.get("LEMMO_TOOLCHAIN")
     if toolchain:
         root = Path(toolchain).expanduser().resolve()
         if not root.is_dir():
-            raise FileNotFoundError(f"EMLM_TOOLCHAIN does not exist: {root}")
+            raise FileNotFoundError(f"LEMMO_TOOLCHAIN does not exist: {root}")
         os.environ.setdefault("CUDA_HOME", str(root))
         compiler = root / "bin/x86_64-conda-linux-gnu-gcc"
         compiler_cxx = root / "bin/x86_64-conda-linux-gnu-g++"

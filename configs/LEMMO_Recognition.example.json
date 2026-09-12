@@ -1,6 +1,6 @@
 {
   "qwen_model": "Qwen/Qwen3.5-4B",
-  "inference_checkpoint": "weights/EMLM_Recognition_inference.pt",
+  "inference_checkpoint": "weights/LEMMO_Recognition.pt",
   "query_count": 16,
   "adapter_bottleneck": 64,
   "lora": {

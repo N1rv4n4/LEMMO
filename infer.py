@@ -4,19 +4,19 @@ from __future__ import annotations
 import argparse
 import json
 
-from emlm import EMLMRecognitionRuntime, EMLMDescriptionRuntime
+from lemmo import LEMMORecognitionRuntime, LEMMODescriptionRuntime
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run one EMLM free-generation request")
-    parser.add_argument("--model", choices=("EMLM_Recognition", "EMLM_Description"), required=True)
+    parser = argparse.ArgumentParser(description="Run one LEMMO free-generation request")
+    parser.add_argument("--model", choices=("LEMMO_Recognition", "LEMMO_Description"), required=True)
     parser.add_argument("--config", required=True)
     parser.add_argument("--signal", required=True, help=".npy or .csv IQ file")
     parser.add_argument("--sample-rate", type=float, required=True, help="sample rate in Hz")
     parser.add_argument("--question", required=True)
     parser.add_argument(
         "--input-setting",
-        help="acquisition-setting text; required for EMLM_Description",
+        help="acquisition-setting text; required for LEMMO_Description",
     )
     parser.add_argument("--task", choices=("amc", "interference", "uav", "wtc"))
     parser.add_argument("--system-prompt")
@@ -24,10 +24,10 @@ def main() -> None:
     parser.add_argument("--max-new-tokens", type=int)
     args = parser.parse_args()
 
-    if args.model == "EMLM_Recognition":
+    if args.model == "LEMMO_Recognition":
         if args.task is None:
-            parser.error("--task is required for EMLM_Recognition")
-        runtime = EMLMRecognitionRuntime(args.config, args.device)
+            parser.error("--task is required for LEMMO_Recognition")
+        runtime = LEMMORecognitionRuntime(args.config, args.device)
         kwargs = {}
         if args.system_prompt is not None:
             kwargs["system_prompt"] = args.system_prompt
@@ -41,8 +41,8 @@ def main() -> None:
         )
     else:
         if args.input_setting is None:
-            parser.error("--input-setting is required for EMLM_Description")
-        runtime = EMLMDescriptionRuntime(args.config, args.device)
+            parser.error("--input-setting is required for LEMMO_Description")
+        runtime = LEMMODescriptionRuntime(args.config, args.device)
         kwargs = {}
         if args.system_prompt is not None:
             kwargs["system_prompt"] = args.system_prompt
