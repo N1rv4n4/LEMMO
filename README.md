@@ -41,8 +41,8 @@ export LEMMO_TOOLCHAIN=/path/to/cuda-toolchain
 
 ## Weights
 
-EMLM_Recognition: https://drive.google.com/file/d/1MV4rREcGGVfflDzI6g5qpnfjMsoQIMd1/view?usp=drive_link
-EMLM_Description: https://drive.google.com/file/d/13P4pv_loh59yWEeF8Y29EZHiPk2OyZG_/view?usp=drive_link
+LEMMO_Recognition: https://drive.google.com/file/d/1MV4rREcGGVfflDzI6g5qpnfjMsoQIMd1/view?usp=drive_link
+LEMMO_Description: https://drive.google.com/file/d/13P4pv_loh59yWEeF8Y29EZHiPk2OyZG_/view?usp=drive_link
 
 After downloading the weights, create a local `weights/` directory and
 place them at:
