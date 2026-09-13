@@ -1,4 +1,4 @@
-# LEMMO: Language-EM Model
+# LEMMO: Large ElectroMagnetic MOdel
 
 This repository provides the implementation of
 LEMMO. It converts raw complex I/Q samples into continuous signal tokens and
