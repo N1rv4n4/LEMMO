@@ -6,10 +6,10 @@ conditions a language model to answer electromagnetic-signal questions.
 
 Two inference variants are implemented:
 
-| Variant | Intended use | IQ length | Signal-language interface |
-|---|---|---:|---|
-| LEMMO_Recognition | Four-task open-ended recognition | 128 to 5,000,000 (validated lengths below) | 16 question-conditioned signal queries |
-| LEMMO_Description | Long-form electromagnetic signal description | 16 to 8,000,000 | continuous 1M-point chunk encoding and 64 question-conditioned signal queries |
+| Variant | Intended use | IQ length |
+|---|---|---:|
+| LEMMO_Recognition | Four-task recognition | 128 to 5,000,000 (validated lengths below) |
+| LEMMO_Description | Long signal description | 16 to 8,000,000 |
 
 ## Repository layout
 
